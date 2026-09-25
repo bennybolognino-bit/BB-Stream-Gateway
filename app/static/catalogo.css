@@ -1,0 +1,50 @@
+.catalog-warning {
+    margin-bottom: 18px;
+    padding: 13px 15px;
+    color: #7b621c;
+    background: #fff8dd;
+    border: 1px solid #e8d693;
+}
+
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 16px;
+}
+
+.catalog-card {
+    padding: 19px;
+    background: white;
+    border: 1px solid #ccd5dc;
+    border-top: 4px solid #1680b9;
+    box-shadow: 0 1px 3px rgb(28 48 62 / 8%);
+}
+
+.catalog-card h2 {
+    margin: 0 0 15px;
+    color: #176fa5;
+    font-size: 16px;
+}
+
+.catalog-card p {
+    margin: 7px 0;
+    color: #637581;
+    font-size: 12px;
+}
+
+.catalog-card a {
+    margin-top: 17px;
+    padding: 10px 13px;
+    display: inline-block;
+    color: white;
+    background: #1988c1;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.catalog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}

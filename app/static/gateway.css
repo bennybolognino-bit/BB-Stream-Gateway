@@ -1,0 +1,392 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    font-family: Arial, "Segoe UI", sans-serif;
+    color: #344250;
+    background: #edf1f5;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #edf1f5;
+}
+
+.layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 230px 1fr;
+}
+
+.sidebar {
+    color: #dbe7ef;
+    background: #263846;
+    border-right: 1px solid #17242d;
+}
+
+.brand {
+    height: 82px;
+    padding: 20px;
+    background: #176fa5;
+    border-bottom: 1px solid #125c89;
+}
+
+.brand strong {
+    display: block;
+    color: white;
+    font-size: 18px;
+    letter-spacing: 0.8px;
+}
+
+.brand span {
+    display: block;
+    margin-top: 5px;
+    color: #c9e7f8;
+    font-size: 10px;
+}
+
+.navigation {
+    padding: 16px 0;
+}
+
+.navigation a {
+    padding: 14px 22px;
+    display: block;
+    color: #c3d1da;
+    font-size: 13px;
+    text-decoration: none;
+    border-left: 4px solid transparent;
+}
+
+.navigation a:hover {
+    color: white;
+    background: #304858;
+}
+
+.navigation a.active {
+    color: white;
+    background: #1d2e39;
+    border-left-color: #31aee5;
+}
+
+.content {
+    min-width: 0;
+}
+
+header {
+    height: 82px;
+    padding: 0 27px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    border-bottom: 1px solid #ccd5dc;
+}
+
+header h1 {
+    margin: 0;
+    color: #176fa5;
+    font-size: 21px;
+    font-weight: 500;
+}
+
+header p {
+    margin: 6px 0 0;
+    color: #8a99a4;
+    font-size: 11px;
+}
+
+.online {
+    padding: 7px 12px;
+    color: #25895a;
+    background: #e4f5ec;
+    border: 1px solid #b9dfca;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+main {
+    padding: 22px 25px 35px;
+}
+
+.toolbar {
+    min-height: 48px;
+    margin-bottom: 15px;
+    padding: 10px 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    border: 1px solid #d1d9df;
+}
+
+.toolbar span {
+    color: #667885;
+    font-size: 11px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(390px, 1fr));
+    gap: 16px;
+}
+
+.card {
+    padding: 0 16px 17px;
+    overflow: hidden;
+    background: white;
+    border: 1px solid #ccd5dc;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgb(28 48 62 / 8%);
+}
+
+.card-header {
+    min-height: 58px;
+    margin: 0 -16px 15px;
+    padding: 11px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f5f8fa;
+    border-bottom: 1px solid #ccd5dc;
+}
+
+.channel-label {
+    display: block;
+    margin-bottom: 3px;
+    color: #1680b9;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.channel-name {
+    width: 210px;
+    min-height: auto;
+    padding: 2px 0;
+    color: #344250;
+    font-size: 15px;
+    font-weight: 600;
+    background: transparent;
+    border: 0;
+}
+
+.status {
+    padding: 5px 9px;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 2px;
+}
+
+.status.running {
+    color: white;
+    background: #37a66d;
+}
+
+.status.stopped {
+    color: white;
+    background: #98a4ad;
+}
+
+.monitor {
+    position: relative;
+    height: 165px;
+    margin: 0 0 16px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: #7f909c;
+    background: #151a1e;
+    border: 4px solid #e3e8eb;
+    font-size: 11px;
+}
+
+.monitor::before {
+    content: "VIDEO";
+    position: absolute;
+    top: 7px;
+    left: 8px;
+    padding: 3px 6px;
+    color: #b9c4ca;
+    background: rgb(0 0 0 / 55%);
+    font-size: 8px;
+}
+
+label {
+    margin: 12px 0 5px;
+    display: block;
+    color: #526570;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+input, select, button {
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 10px;
+    color: #344250;
+    background: white;
+    border: 1px solid #bec9d0;
+    border-radius: 2px;
+    outline: none;
+}
+
+input:focus, select:focus {
+    border-color: #2396cf;
+    box-shadow: 0 0 0 2px rgb(35 150 207 / 12%);
+}
+
+button {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+    cursor: not-allowed;
+    color: #87949c;
+    background: #edf0f2;
+    opacity: 1;
+}
+
+.row, .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+}
+
+.actions {
+    margin-top: 17px;
+    padding-top: 14px;
+    border-top: 1px solid #e0e5e8;
+}
+
+.save, .refresh {
+    color: #176fa5;
+    background: white;
+    border-color: #1680b9;
+}
+
+.start {
+    color: white;
+    background: #1988c1;
+    border-color: #1475a7;
+}
+
+.stop {
+    color: white;
+    background: #d65b54;
+    border-color: #c84a44;
+}
+
+.refresh {
+    width: auto;
+    min-width: 105px;
+}
+
+.checkbox-row {
+    margin-top: 16px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: #f5f8fa;
+    border: 1px solid #d8e0e5;
+}
+
+.checkbox-row input {
+    width: auto;
+    min-height: auto;
+}
+
+.checkbox-row label {
+    margin: 0;
+}
+
+.notice {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    padding: 13px 18px;
+    opacity: 0;
+    pointer-events: none;
+    color: white;
+    background: #37a66d;
+    border-radius: 2px;
+    box-shadow: 0 3px 12px rgb(0 0 0 / 20%);
+    transition: opacity 0.2s;
+}
+
+.notice.visible {
+    opacity: 1;
+}
+
+.notice.error {
+    background: #d65b54;
+}
+
+@media (max-width: 760px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        border-right: 0;
+    }
+
+    .brand {
+        height: auto;
+    }
+
+    .navigation {
+        padding: 7px;
+        display: flex;
+    }
+
+    .navigation a {
+        flex: 1;
+        padding: 11px;
+        text-align: center;
+        border-left: 0;
+        border-bottom: 3px solid transparent;
+    }
+
+    .navigation a.active {
+        border-bottom-color: #31aee5;
+    }
+
+    main {
+        padding: 14px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+.toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar-actions button {
+    width: auto;
+}
+
+.add {
+    color: white;
+    background: #1988c1;
+    border-color: #1475a7;
+}
+
+.actions {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.delete {
+    color: #b7443e;
+    background: white;
+    border-color: #d65b54;
+}

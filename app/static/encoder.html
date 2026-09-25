@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Encoder | BB Stream Gateway</title>
+    <link rel="stylesheet" href="/static/gateway.css">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <strong>BB STREAM GATEWAY</strong>
+            <span>IP VIDEO SYSTEM</span>
+        </div>
+
+        <nav class="navigation">
+            <a class="active" href="/encoder">ENCODER</a>
+            <a href="/decoder">DECODER</a>
+            <a href="/catalogo">CATALOGO TV</a>
+        </nav>
+    </aside>
+
+    <section class="content">
+        <header>
+            <div>
+                <h1>Encoder</h1>
+                <p>Encoding and IP stream transmission</p>
+            </div>
+            <span class="online">â— SYSTEM ONLINE</span>
+        </header>
+
+        <main>
+            <div class="toolbar">
+                <span>SRT Â· RTMP Â· RTP Â· UDP Â· HLS/M3U8</span>
+                <div class="toolbar-actions">
+                    <button class="add" onclick="createEncoder()">
+                        + AGGIUNGI INPUT
+                    </button>
+                    <button class="refresh" onclick="loadEncoders()">
+                        REFRESH
+                    </button>
+                </div>
+            </div>
+
+            <section id="encoder-grid" class="grid"></section>
+        </main>
+    </section>
+</div>
+
+<div id="notice" class="notice"></div>
+<script src="/static/encoder.js"></script>
+</body>
+</html>
+
+
+
+

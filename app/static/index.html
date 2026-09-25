@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BB Stream Gateway</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div>
+            <h1>BB STREAM GATEWAY</h1>
+            <p>Multichannel IP Video Gateway</p>
+        </div>
+        <div id="system-status" class="system-online">
+            ● SYSTEM ONLINE
+        </div>
+    </header>
+
+    <main>
+        <div class="toolbar">
+            <div>
+                <h2>Streaming Channels</h2>
+                <span>SRT · RTMP · RTP · UDP MPEG-TS</span>
+            </div>
+
+            <button onclick="loadChannels()">REFRESH</button>
+        </div>
+
+        <section id="channels" class="channel-grid"></section>
+    </main>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

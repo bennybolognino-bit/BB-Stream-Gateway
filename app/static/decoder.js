@@ -1,0 +1,181 @@
+﻿const grid = document.getElementById("decoder-grid");
+const notice = document.getElementById("notice");
+
+const esc = value => String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+
+const selected = (value, expected) =>
+    value === expected ? "selected" : "";
+
+function notify(message, error = false) {
+    notice.textContent = message;
+    notice.className = error ? "notice visible error" : "notice visible";
+    setTimeout(() => notice.className = "notice", 3000);
+}
+
+async function api(path, options = {}) {
+    const response = await fetch(path, options);
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.detail || "Operation failed");
+    }
+
+    return data;
+}
+
+function renderDecoder(channel) {
+    const disabled = channel.running ? "disabled" : "";
+
+    return `
+    <article class="card">
+        <div class="card-header">
+            <div>
+                <span class="channel-label">DECODER ${channel.id} · NOME / ETICHETTA</span>
+                <input id="name-${channel.id}" class="channel-name"
+                    value="${esc(channel.name)}" ${disabled}>
+            </div>
+            <span class="status ${channel.running ? "running" : "stopped"}">
+                ${channel.running ? "RUNNING" : "STOPPED"}
+            </span>
+        </div>
+
+        <div class="monitor">
+            ${channel.running ? "DECODING ACTIVE" : "NO SIGNAL"}
+        </div>
+
+        <label>TIPO INGRESSO</label>
+        <select id="input-type-${channel.id}" ${disabled}>
+            <option value="srt"
+                ${selected(channel.input_type || "srt", "srt")}>SRT</option>
+            <option value="rtmp"
+                ${selected(channel.input_type, "rtmp")}>RTMP / RTMPS</option>
+            <option value="rtsp"
+                ${selected(channel.input_type, "rtsp")}>RTSP</option>
+            <option value="rtp"
+                ${selected(channel.input_type, "rtp")}>RTP</option>
+            <option value="udp"
+                ${selected(channel.input_type, "udp")}>UDP MPEG-TS</option>
+            <option value="smpte2022"
+                ${selected(channel.input_type, "smpte2022")}>SMPTE 2022-2</option>
+            <option value="hls"
+                ${selected(channel.input_type, "hls")}>HLS / M3U8</option>
+            <option value="http"
+                ${selected(channel.input_type, "http")}>HTTP / HTTPS</option>
+            <option value="file"
+                ${selected(channel.input_type, "file")}>File locale</option>
+        </select>
+
+        <label>INDIRIZZO / PERCORSO SORGENTE</label>
+        <input id="input-${channel.id}" value="${esc(channel.input_url)}"
+            placeholder="https://server/channel/master.m3u8" ${disabled}>
+
+        <label>DISPLAY MODE</label>
+        <select id="display-${channel.id}" ${disabled}>
+            <option value="window"
+                ${selected(channel.display_mode, "window")}>Window</option>
+            <option value="fullscreen"
+                ${selected(channel.display_mode, "fullscreen")}>Fullscreen HDMI</option>
+        </select>
+
+        <div class="checkbox-row">
+            <input type="checkbox" id="hardware-${channel.id}"
+                ${channel.hardware_acceleration ? "checked" : ""}
+                ${disabled}>
+            <label for="hardware-${channel.id}">
+                HARDWARE ACCELERATION
+            </label>
+        </div>
+
+        <div class="actions">
+            <button class="delete"
+                onclick="deleteDecoder(${channel.id})"
+                ${disabled}>DELETE</button>
+            <button class="save" onclick="saveDecoder(${channel.id})"
+                ${disabled}>SAVE</button>
+            ${channel.running
+                ? `<button class="stop"
+                    onclick="stopDecoder(${channel.id})">STOP</button>`
+                : `<button class="start"
+                    onclick="startDecoder(${channel.id})">START</button>`}
+        </div>
+    </article>`;
+}
+
+async function loadDecoders() {
+    try {
+        const channels = await api("/api/decoders");
+        grid.innerHTML = channels.map(renderDecoder).join("");
+    } catch (error) {
+        notify(error.message, true);
+    }
+}
+
+async function saveDecoder(id, showMessage = true) {
+    const body = {
+        name: document.getElementById(`name-${id}`).value,
+        input_type: document.getElementById(`input-type-${id}`).value,
+        input_url: document.getElementById(`input-${id}`).value,
+        display_mode: document.getElementById(`display-${id}`).value,
+        hardware_acceleration:
+            document.getElementById(`hardware-${id}`).checked
+    };
+
+    await api(`/api/decoders/${id}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+    });
+
+    if (showMessage) notify(`Decoder ${id} saved`);
+}
+
+async function startDecoder(id) {
+    try {
+        await saveDecoder(id, false);
+        await api(`/api/decoders/${id}/start`, {method: "POST"});
+        notify(`Decoder ${id} started`);
+        loadDecoders();
+    } catch (error) {
+        notify(error.message, true);
+    }
+}
+
+async function stopDecoder(id) {
+    try {
+        await api(`/api/decoders/${id}/stop`, {method: "POST"});
+        notify(`Decoder ${id} stopped`);
+        loadDecoders();
+    } catch (error) {
+        notify(error.message, true);
+    }
+}
+
+loadDecoders();
+
+
+
+async function createDecoder() {
+    try {
+        await api("/api/decoders", {method: "POST"});
+        notify("New decoder input added");
+        loadDecoders();
+    } catch (error) {
+        notify(error.message, true);
+    }
+}
+
+async function deleteDecoder(id) {
+    if (!confirm(`Delete Decoder ${id}?`)) return;
+
+    try {
+        await api(`/api/decoders/${id}`, {method: "DELETE"});
+        notify(`Decoder ${id} deleted`);
+        loadDecoders();
+    } catch (error) {
+        notify(error.message, true);
+    }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BB Stream Gateway</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>BB Stream Gateway</h1>
+        <span class="online">● SYSTEM ONLINE</span>
+    </header>
+
+    <main>
+        <h2>Streaming Channels</h2>
+
+        <section class="grid">
+            {% for channel in channels %}
+            <article class="channel">
+                <div class="channel-header">
+                    <strong>CHANNEL {{ channel }}</strong>
+                    <span class="stopped">STOPPED</span>
+                </div>
+
+                <div class="preview">NO SIGNAL</div>
+
+                <label>Input</label>
+                <select>
+                    <option>SRT</option>
+                    <option>RTMP</option>
+                    <option>RTP</option>
+                    <option>UDP MPEG-TS</option>
+                </select>
+
+                <label>Output</label>
+                <select>
+                    <option>SRT</option>
+                    <option>RTMP</option>
+                    <option>RTP</option>
+                    <option>UDP MPEG-TS</option>
+                </select>
+
+                <div class="actions">
+                    <button class="start">START</button>
+                    <button class="configure">CONFIGURE</button>
+                </div>
+            </article>
+            {% endfor %}
+        </section>
+    </main>
+</body>
+</html>
