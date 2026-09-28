@@ -1,4 +1,4 @@
-﻿const grid = document.getElementById("decoder-grid");
+const grid = document.getElementById("decoder-grid");
 const notice = document.getElementById("notice");
 
 const esc = value => String(value ?? "")
@@ -31,7 +31,7 @@ function renderDecoder(channel) {
     const disabled = channel.running ? "disabled" : "";
 
     return `
-    <article class="card">
+    <article class="card" id="decoder-card-${channel.id}">
         <div class="card-header">
             <div>
                 <span class="channel-label">DECODER ${channel.id} · NOME / ETICHETTA</span>
@@ -138,6 +138,7 @@ async function loadDecoders() {
     try {
         const channels = await api("/api/decoders");
         grid.innerHTML = channels.map(renderDecoder).join("");
+        attachAudioControls(channels);
     } catch (error) {
         notify(error.message, true);
     }
@@ -248,3 +249,89 @@ async function toggleDecoderMute(id) {
     await setDecoderAudio(id, !currentlyMuted);
 }
 
+
+async function refreshDecoderStates() {
+    try {
+        const response = await fetch("/api/decoders");
+        const channels = await response.json();
+
+        for (const channel of channels) {
+            const card = document.getElementById(
+                `decoder-card-${channel.id}`
+            );
+
+            if (!card) continue;
+
+            const status = card.querySelector(".status");
+            const monitor = card.querySelector(".monitor");
+
+            status.textContent = channel.running
+                ? "RUNNING"
+                : "STOPPED";
+
+            status.className = channel.running
+                ? "status running"
+                : "status stopped";
+
+            monitor.textContent = channel.running
+                ? "DECODING ACTIVE"
+                : "NO SIGNAL";
+        }
+    } catch (error) {
+        console.error("Decoder status error", error);
+    }
+}
+
+setInterval(refreshDecoderStates, 2000);
+
+
+
+function attachAudioControls(channels) {
+    for (const channel of channels) {
+        const card = document.getElementById(
+            `decoder-card-${channel.id}`
+        );
+
+        if (!card || card.querySelector(".audio-panel")) continue;
+
+        const actions = card.querySelector(".actions");
+        if (!actions) continue;
+
+        const panel = document.createElement("div");
+        panel.className = "audio-panel";
+
+        const volume = channel.volume ?? 100;
+        const muted = channel.muted ?? false;
+
+        panel.innerHTML = `
+            <div class="audio-title">
+                <strong>AUDIO OUTPUT</strong>
+                <span id="volume-value-${channel.id}">
+                    ${volume}%
+                </span>
+            </div>
+
+            <input
+                class="volume-slider"
+                id="volume-${channel.id}"
+                type="range"
+                min="0"
+                max="100"
+                value="${volume}"
+                oninput="previewVolume(${channel.id})"
+                onchange="setDecoderAudio(${channel.id})"
+            >
+
+            <button
+                id="mute-${channel.id}"
+                class="audio-mute ${muted ? "muted" : ""}"
+                data-muted="${muted}"
+                onclick="toggleDecoderMute(${channel.id})"
+            >
+                ${muted ? "UNMUTE" : "MUTE"}
+            </button>
+        `;
+
+        actions.before(panel);
+    }
+}

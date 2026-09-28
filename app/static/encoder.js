@@ -1,4 +1,4 @@
-﻿const grid = document.getElementById("encoder-grid");
+const grid = document.getElementById("encoder-grid");
 const notice = document.getElementById("notice");
 
 const esc = value => String(value ?? "")
@@ -31,7 +31,7 @@ function renderEncoder(channel) {
     const disabled = channel.running ? "disabled" : "";
 
     return `
-    <article class="card">
+    <article class="card" id="encoder-card-${channel.id}">
         <div class="card-header">
             <div>
                 <span class="channel-label">ENCODER ${channel.id} · NOME / ETICHETTA</span>
@@ -200,3 +200,39 @@ async function deleteEncoder(id) {
         notify(error.message, true);
     }
 }
+
+async function refreshEncoderStates() {
+    try {
+        const response = await fetch("/api/encoders");
+        const channels = await response.json();
+
+        for (const channel of channels) {
+            const card = document.getElementById(
+                `encoder-card-${channel.id}`
+            );
+
+            if (!card) continue;
+
+            const status = card.querySelector(".status");
+            const monitor = card.querySelector(".monitor");
+
+            status.textContent = channel.running
+                ? "RUNNING"
+                : "STOPPED";
+
+            status.className = channel.running
+                ? "status running"
+                : "status stopped";
+
+            monitor.textContent = channel.running
+                ? "ENCODING ACTIVE"
+                : "NO INPUT";
+        }
+    } catch (error) {
+        console.error("Encoder status error", error);
+    }
+}
+
+setInterval(refreshEncoderStates, 2000);
+
+
