@@ -390,3 +390,38 @@ select:disabled {
     background: white;
     border-color: #d65b54;
 }
+.audio-panel {
+    margin-top: 16px;
+    padding: 13px;
+    background: #f5f8fa;
+    border: 1px solid #d1dbe1;
+}
+
+.audio-title {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    color: #526570;
+    font-size: 10px;
+}
+
+.volume-slider {
+    width: calc(100% - 105px);
+    min-height: auto;
+    vertical-align: middle;
+    accent-color: #1988c1;
+}
+
+.audio-mute {
+    width: 90px;
+    margin-left: 10px;
+    color: #176fa5;
+    background: white;
+    border-color: #1680b9;
+}
+
+.audio-mute.muted {
+    color: white;
+    background: #d65b54;
+    border-color: #c84a44;
+}

@@ -31,6 +31,10 @@ def delete_decoder(channel_id: int):
     except (KeyError, RuntimeError) as error:
         raise HTTPException(status_code=400, detail=str(error))
 
+class AudioControl(BaseModel):
+    volume: int = Field(default=100, ge=0, le=100)
+    muted: bool = False
+
 @router.get("")
 def list_decoders():
     return decoder_manager.list_channels()
@@ -50,6 +54,20 @@ def update_decoder(
         raise HTTPException(status_code=400, detail=str(error))
 
 
+@router.put("/{channel_id}/audio")
+def set_decoder_audio(
+    channel_id: int,
+    control: AudioControl
+):
+    try:
+        return decoder_manager.set_audio(
+            channel_id,
+            control.volume,
+            control.muted
+        )
+    except (KeyError, RuntimeError) as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
 @router.post("/{channel_id}/start")
 def start_decoder(channel_id: int):
     try:
@@ -61,5 +79,6 @@ def start_decoder(channel_id: int):
 @router.post("/{channel_id}/stop")
 def stop_decoder(channel_id: int):
     return decoder_manager.stop(channel_id)
+
 
 

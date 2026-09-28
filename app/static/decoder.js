@@ -90,6 +90,35 @@ function renderDecoder(channel) {
             </label>
         </div>
 
+        <div class="audio-panel">
+            <div class="audio-title">
+                <strong>AUDIO OUTPUT</strong>
+                <span id="volume-value-${channel.id}">
+                    ${channel.volume ?? 100}%
+                </span>
+            </div>
+
+            <input
+                class="volume-slider"
+                id="volume-${channel.id}"
+                type="range"
+                min="0"
+                max="100"
+                value="${channel.volume ?? 100}"
+                oninput="previewVolume(${channel.id})"
+                onchange="setDecoderAudio(${channel.id})"
+            >
+
+            <button
+                id="mute-${channel.id}"
+                class="audio-mute ${channel.muted ? "muted" : ""}"
+                data-muted="${channel.muted ? "true" : "false"}"
+                onclick="toggleDecoderMute(${channel.id})"
+            >
+                ${channel.muted ? "UNMUTE" : "MUTE"}
+            </button>
+        </div>
+
         <div class="actions">
             <button class="delete"
                 onclick="deleteDecoder(${channel.id})"
@@ -179,3 +208,43 @@ async function deleteDecoder(id) {
         notify(error.message, true);
     }
 }
+
+function previewVolume(id) {
+    const volume = document.getElementById(`volume-${id}`).value;
+    document.getElementById(`volume-value-${id}`).textContent =
+        `${volume}%`;
+}
+
+async function setDecoderAudio(id, mutedValue = null) {
+    const slider = document.getElementById(`volume-${id}`);
+    const muteButton = document.getElementById(`mute-${id}`);
+
+    const muted = mutedValue === null
+        ? muteButton.dataset.muted === "true"
+        : mutedValue;
+
+    try {
+        const result = await api(`/api/decoders/${id}/audio`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                volume: Number(slider.value),
+                muted: muted
+            })
+        });
+
+        muteButton.dataset.muted = String(result.muted);
+        muteButton.textContent = result.muted ? "UNMUTE" : "MUTE";
+        muteButton.classList.toggle("muted", result.muted);
+    } catch (error) {
+        notify(error.message, true);
+    }
+}
+
+async function toggleDecoderMute(id) {
+    const button = document.getElementById(`mute-${id}`);
+    const currentlyMuted = button.dataset.muted === "true";
+
+    await setDecoderAudio(id, !currentlyMuted);
+}
+
