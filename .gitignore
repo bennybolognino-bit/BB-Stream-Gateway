@@ -9,3 +9,5 @@ data/*.json
 .idea/
 Thumbs.db
 .DS_Store
+
+tools/mediamtx/

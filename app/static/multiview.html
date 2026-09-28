@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Multiview | BB Stream Gateway</title>
+    <title>WebRTC Multiview | BB Stream Gateway</title>
     <link rel="stylesheet" href="/static/gateway.css">
     <link rel="stylesheet" href="/static/multiview.css">
 </head>
@@ -26,36 +26,60 @@
     <section class="content">
         <header>
             <div>
-                <h1>Multiview</h1>
-                <p>Monitoraggio simultaneo dei decoder</p>
+                <h1>WebRTC Multiview</h1>
+                <p>Low-latency broadcast monitoring</p>
             </div>
-            <span class="online">● LIVE MONITOR</span>
+            <span id="multiview-status" class="status stopped">
+                STOPPED
+            </span>
         </header>
 
         <main>
             <div class="toolbar">
-                <span>Preview video senza audio</span>
-
                 <div class="multiview-controls">
-                    <label for="layout">LAYOUT</label>
-                    <select id="layout" onchange="changeLayout()">
+                    <label for="layout-selector">LAYOUT</label>
+
+                    <select id="layout-selector">
                         <option value="2">2 × 2</option>
                         <option value="3">3 × 3</option>
                         <option value="4">4 × 4</option>
                     </select>
 
-                    <button onclick="loadMultiview()">
-                        REFRESH
+                    <button class="start" onclick="startMultiview()">
+                        START
+                    </button>
+
+                    <button class="stop" onclick="stopMultiview()">
+                        STOP
+                    </button>
+
+                    <button onclick="openFullscreen()">
+                        FULLSCREEN
                     </button>
                 </div>
             </div>
 
-            <section id="multiview-grid"
-                     class="multiview-grid layout-2"></section>
+            <div id="webrtc-stage" class="webrtc-stage">
+                <iframe
+                    id="webrtc-viewer"
+                    src="about:blank"
+                    allow="autoplay; fullscreen"
+                    scrolling="no">
+                </iframe>
+
+                <div id="channel-labels"
+                     class="channel-labels layout-2"></div>
+
+                <div id="waiting-message" class="waiting-message">
+                    START MULTIVIEW
+                </div>
+            </div>
+
+            <div id="multiview-message"></div>
         </main>
     </section>
 </div>
 
-<script src="/static/multiview.js"></script>
+<script src="/static/multiview.js?v=webrtc1"></script>
 </body>
 </html>

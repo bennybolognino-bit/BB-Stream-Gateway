@@ -1,9 +1,8 @@
-import subprocess
-
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 from app.services.decoder_manager import decoder_manager
+from app.services.multiview_manager import multiview_manager
 
 router = APIRouter(
     prefix="/api/multiview",
@@ -11,75 +10,29 @@ router = APIRouter(
 )
 
 
-def generate_preview(input_url):
-    command = [
-        "ffmpeg",
-        "-hide_banner",
-        "-nostdin",
-        "-loglevel", "error",
-        "-fflags", "nobuffer",
-        "-i", input_url,
-        "-an",
-        "-vf", "fps=8,scale=640:-2",
-        "-c:v", "mjpeg",
-        "-q:v", "7",
-        "-f", "mpjpeg",
-        "-boundary_tag", "frame",
-        "pipe:1"
-    ]
+class MultiviewConfiguration(BaseModel):
+    layout: int = Field(default=2, ge=2, le=4)
 
-    process = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        creationflags=getattr(
-            subprocess,
-            "CREATE_NO_WINDOW",
-            0
-        )
-    )
 
+@router.get("/status")
+def status():
+    return multiview_manager.status()
+
+
+@router.post("/start")
+def start(configuration: MultiviewConfiguration):
     try:
-        while True:
-            chunk = process.stdout.read(32768)
-
-            if not chunk:
-                break
-
-            yield chunk
-    finally:
-        if process.poll() is None:
-            process.terminate()
-
-            try:
-                process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                process.kill()
-
-
-@router.get("/preview/{channel_id}")
-def preview(channel_id: int):
-    channel = decoder_manager.get_channel(channel_id)
-
-    if channel is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Decoder not found"
+        return multiview_manager.start(
+            decoder_manager.list_channels(),
+            configuration.layout
         )
-
-    input_url = channel.get("input_url", "").strip()
-
-    if not input_url:
+    except (RuntimeError, ValueError) as error:
         raise HTTPException(
             status_code=400,
-            detail="Decoder input is not configured"
+            detail=str(error)
         )
 
-    return StreamingResponse(
-        generate_preview(input_url),
-        media_type="multipart/x-mixed-replace; boundary=frame",
-        headers={
-            "Cache-Control": "no-store, no-cache",
-            "Pragma": "no-cache"
-        }
-    )
+
+@router.post("/stop")
+def stop():
+    return multiview_manager.stop()

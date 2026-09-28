@@ -1,78 +1,127 @@
-const grid = document.getElementById("multiview-grid");
-const layoutSelector = document.getElementById("layout");
+const viewer = document.getElementById("webrtc-viewer");
+const stage = document.getElementById("webrtc-stage");
+const labels = document.getElementById("channel-labels");
+const statusElement = document.getElementById("multiview-status");
+const waitingMessage = document.getElementById("waiting-message");
+const message = document.getElementById("multiview-message");
+const layoutSelector = document.getElementById("layout-selector");
 
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
+let viewerAttached = false;
+
+async function api(path, options = {}) {
+    const response = await fetch(path, options);
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.detail || "Operation failed");
+    }
+
+    return data;
 }
 
-function changeLayout() {
-    grid.className =
-        `multiview-grid layout-${layoutSelector.value}`;
+function renderLabels(state) {
+    const slots = state.layout * state.layout;
 
-    localStorage.setItem(
-        "multiview-layout",
-        layoutSelector.value
-    );
+    labels.className =
+        `channel-labels layout-${state.layout}`;
+
+    const items = [];
+
+    for (let index = 0; index < slots; index++) {
+        const channel = state.channels[index];
+
+        items.push(`
+            <div class="channel-overlay">
+                ${channel
+                    ? `CH ${channel.id} · ${channel.name}`
+                    : "NO SIGNAL"}
+            </div>
+        `);
+    }
+
+    labels.innerHTML = items.join("");
 }
 
-function renderTile(channel) {
-    const configured = Boolean(channel.input_url?.trim());
-    const timestamp = Date.now();
+function applyStatus(state) {
+    statusElement.textContent =
+        state.running ? "ON AIR" : "STOPPED";
 
-    return `
-        <article class="multiview-tile">
-            <div class="tile-header">
-                <strong>${escapeHtml(channel.name)}</strong>
-                <span class="${configured ? "configured" : "offline"}">
-                    ${configured ? "READY" : "NO INPUT"}
-                </span>
-            </div>
+    statusElement.className =
+        state.running ? "status running" : "status stopped";
 
-            <div class="tile-video">
-                ${configured
-                    ? `<img
-                        src="/api/multiview/preview/${channel.id}?t=${timestamp}"
-                        alt="${escapeHtml(channel.name)}"
-                        onerror="this.classList.add('preview-error')"
-                       >`
-                    : `<div class="no-signal">NO SIGNAL</div>`
-                }
-            </div>
+    layoutSelector.value = String(state.layout);
+    renderLabels(state);
 
-            <div class="tile-footer">
-                <span>DECODER ${channel.id}</span>
-                <a href="/decoder">CONFIGURE</a>
-            </div>
-        </article>
-    `;
-}
+    if (state.running) {
+        waitingMessage.style.display = "none";
 
-async function loadMultiview() {
-    try {
-        const response = await fetch("/api/decoders");
+        if (!viewerAttached) {
+            setTimeout(() => {
+                viewer.src =
+                    `${state.webrtc_url}` +
+                    `?controls=false` +
+                    `&muted=true` +
+                    `&autoplay=true` +
+                    `&playsInline=true` +
+                    `&t=${Date.now()}`;
 
-        if (!response.ok) {
-            throw new Error("Unable to load decoders");
+                viewerAttached = true;
+            }, 1200);
         }
-
-        const channels = await response.json();
-        grid.innerHTML = channels.map(renderTile).join("");
-    } catch (error) {
-        grid.innerHTML = `
-            <div class="multiview-error">
-                ${escapeHtml(error.message)}
-            </div>
-        `;
+    } else {
+        viewer.src = "about:blank";
+        viewerAttached = false;
+        waitingMessage.style.display = "grid";
     }
 }
 
-const savedLayout =
-    localStorage.getItem("multiview-layout") || "2";
+async function startMultiview() {
+    message.textContent = "Starting WebRTC multiview...";
 
-layoutSelector.value = savedLayout;
-changeLayout();
-loadMultiview();
+    try {
+        const state = await api("/api/multiview/start", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                layout: Number(layoutSelector.value)
+            })
+        });
+
+        viewerAttached = false;
+        applyStatus(state);
+        message.textContent = "Multiview started";
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+async function stopMultiview() {
+    try {
+        const state = await api("/api/multiview/stop", {
+            method: "POST"
+        });
+
+        applyStatus(state);
+        message.textContent = "Multiview stopped";
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+function openFullscreen() {
+    if (stage.requestFullscreen) {
+        stage.requestFullscreen();
+    }
+}
+
+async function refreshStatus() {
+    try {
+        const state = await api("/api/multiview/status");
+        applyStatus(state);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+refreshStatus();
+setInterval(refreshStatus, 3000);
