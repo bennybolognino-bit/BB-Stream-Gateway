@@ -1,4 +1,4 @@
-﻿import threading
+import threading
 import time
 
 import comtypes
@@ -137,5 +137,6 @@ decoder_manager = DecoderManager(
     log_prefix="decoder",
     defaults=DEFAULT_DECODERS
 )
+
 
 

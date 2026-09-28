@@ -1,5 +1,5 @@
-﻿#define MyAppName "BB Stream Gateway"
-#define MyAppVersion "1.0.0"
+#define MyAppName "BB Stream Gateway"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "BB"
 #define MyAppExeName "BBStreamGateway.exe"
 
@@ -11,7 +11,7 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={localappdata}\Programs\BB Stream Gateway
 DefaultGroupName=BB Stream Gateway
 OutputDir=installer
-OutputBaseFilename=BB-Stream-Gateway-Setup-1.0.0
+OutputBaseFilename=BB-Stream-Gateway-Setup-1.0.2
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -46,3 +46,5 @@ Filename: "{app}\{#MyAppExeName}"; Description: "Avvia BB Stream Gateway"; Worki
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\logs"
+
+
