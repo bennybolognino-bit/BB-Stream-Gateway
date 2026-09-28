@@ -20,7 +20,7 @@ class ProcessManager:
             self._save(defaults)
 
     def _load(self):
-        return json.loads(self.data_file.read_text(encoding="utf-8"))
+        return json.loads(self.data_file.read_text(encoding="utf-8-sig"))
 
     def _save(self, channels):
         self.data_file.write_text(
@@ -162,4 +162,5 @@ class ProcessManager:
                 "channel_id": channel_id,
                 "running": False
             }
+
 
