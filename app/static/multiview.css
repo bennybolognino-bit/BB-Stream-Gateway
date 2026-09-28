@@ -1,0 +1,124 @@
+.multiview-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.multiview-controls label {
+    margin: 0;
+}
+
+.multiview-controls select {
+    width: 100px;
+}
+
+.multiview-controls button {
+    width: auto;
+}
+
+.multiview-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.multiview-grid.layout-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.multiview-grid.layout-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.multiview-grid.layout-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.multiview-tile {
+    min-width: 0;
+    overflow: hidden;
+    background: #17222a;
+    border: 1px solid #354752;
+}
+
+.tile-header {
+    height: 38px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    background: #263846;
+    font-size: 11px;
+}
+
+.configured {
+    color: #5cdb98;
+    font-size: 9px;
+}
+
+.offline {
+    color: #ff7d87;
+    font-size: 9px;
+}
+
+.tile-video {
+    aspect-ratio: 16 / 9;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #050708;
+}
+
+.tile-video img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.tile-video img.preview-error {
+    display: none;
+}
+
+.no-signal {
+    color: #53636d;
+    font-size: 11px;
+}
+
+.tile-footer {
+    height: 34px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #8da0ac;
+    background: #1b2831;
+    font-size: 9px;
+}
+
+.tile-footer a {
+    color: #4db4e6;
+    text-decoration: none;
+}
+
+.multiview-error {
+    padding: 20px;
+    color: #b7443e;
+    background: white;
+    border: 1px solid #d65b54;
+}
+
+@media (max-width: 1000px) {
+    .multiview-grid.layout-3,
+    .multiview-grid.layout-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .multiview-grid.layout-2,
+    .multiview-grid.layout-3,
+    .multiview-grid.layout-4 {
+        grid-template-columns: 1fr;
+    }
+}

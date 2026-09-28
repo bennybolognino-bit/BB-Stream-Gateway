@@ -4,11 +4,13 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.encoders import router as encoders_router
 from app.api.decoders import router as decoders_router
+from app.api.multiview import router as multiview_router
 
 app = FastAPI(title="BB Stream Gateway", version="0.4.0")
 
 app.include_router(encoders_router)
 app.include_router(decoders_router)
+app.include_router(multiview_router)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
@@ -31,6 +33,10 @@ def decoder_page():
 def catalog_page():
     return FileResponse("app/static/catalogo.html")
 
+@app.get("/multiview", include_in_schema=False)
+def multiview_page():
+    return FileResponse("app/static/multiview.html")
+
 @app.get("/api/health")
 def health():
     return {
@@ -38,4 +44,5 @@ def health():
         "application": "BB Stream Gateway",
         "version": "0.4.0"
     }
+
 
