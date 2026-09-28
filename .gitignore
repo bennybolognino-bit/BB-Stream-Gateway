@@ -11,3 +11,9 @@ Thumbs.db
 .DS_Store
 
 tools/mediamtx/
+
+build/
+dist/
+installer/
+*.spec
+tools/ffmpeg/
