@@ -425,3 +425,7 @@ select:disabled {
     background: #d65b54;
     border-color: #c84a44;
 }
+
+.toolbar > span {
+    display: none !important;
+}

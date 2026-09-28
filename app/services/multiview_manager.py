@@ -1,3 +1,4 @@
+import math
 import socket
 import subprocess
 import time
@@ -10,8 +11,9 @@ class MultiviewManager:
         self.process_log = None
         self.server_process = None
         self.server_log = None
-        self.layout = 2
-        self.channels = []
+        self.layout = "grid2"
+        self.custom_columns = 2
+        self.tiles = []
 
     def _port_open(self, port):
         try:
@@ -32,13 +34,12 @@ class MultiviewManager:
         ).resolve()
 
         if not executable.exists():
-            raise RuntimeError(
-                "MediaMTX executable not found"
-            )
+            raise RuntimeError("MediaMTX executable not found")
 
-        self.server_log = Path(
-            "logs/mediamtx.log"
-        ).open("a", encoding="utf-8")
+        self.server_log = Path("logs/mediamtx.log").open(
+            "a",
+            encoding="utf-8"
+        )
 
         self.server_process = subprocess.Popen(
             [str(executable)],
@@ -81,18 +82,118 @@ class MultiviewManager:
             self.process_log.close()
             self.process_log = None
 
-    def _tile_size(self, columns):
-        sizes = {
-            2: (640, 360),
-            3: (426, 240),
-            4: (320, 180)
+    def _grid(self, columns, rows):
+        tile_width = 1280 // columns
+        tile_height = 720 // rows
+        positions = []
+
+        for row in range(rows):
+            for column in range(columns):
+                positions.append({
+                    "x": column * tile_width,
+                    "y": row * tile_height,
+                    "width": tile_width,
+                    "height": tile_height
+                })
+
+        return positions
+
+    def _layout_positions(
+        self,
+        layout,
+        channel_count,
+        custom_columns
+    ):
+        if layout == "grid2":
+            return self._grid(2, 2)
+
+        if layout == "grid3":
+            return self._grid(3, 3)
+
+        if layout == "grid4":
+            return self._grid(4, 4)
+
+        if layout == "main3":
+            return [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "width": 960,
+                    "height": 720
+                },
+                {
+                    "x": 960,
+                    "y": 0,
+                    "width": 320,
+                    "height": 240
+                },
+                {
+                    "x": 960,
+                    "y": 240,
+                    "width": 320,
+                    "height": 240
+                },
+                {
+                    "x": 960,
+                    "y": 480,
+                    "width": 320,
+                    "height": 240
+                }
+            ]
+
+        if layout == "main5":
+            positions = [{
+                "x": 0,
+                "y": 0,
+                "width": 960,
+                "height": 720
+            }]
+
+            for row in range(5):
+                positions.append({
+                    "x": 960,
+                    "y": row * 144,
+                    "width": 320,
+                    "height": 144
+                })
+
+            return positions
+
+        if layout == "custom":
+            count = max(1, min(channel_count, 16))
+            columns = max(1, min(custom_columns, count, 4))
+            rows = math.ceil(count / columns)
+
+            positions = self._grid(columns, rows)
+            return positions[:count]
+
+        raise ValueError("Unsupported multiview layout")
+
+    def _ordered_channels(self, channels, channel_ids):
+        configured = [
+            channel for channel in channels
+            if channel.get("input_url", "").strip()
+        ]
+
+        if not channel_ids:
+            return configured
+
+        lookup = {
+            channel["id"]: channel
+            for channel in configured
         }
-        return sizes[columns]
 
-    def build_command(self, channels, columns):
-        slots = columns * columns
-        tile_width, tile_height = self._tile_size(columns)
+        ordered = []
 
+        for channel_id in channel_ids:
+            channel = lookup.get(channel_id)
+
+            if channel:
+                ordered.append(channel)
+
+        return ordered
+
+    def build_command(self, channels, positions):
         command = [
             "ffmpeg",
             "-hide_banner",
@@ -105,57 +206,64 @@ class MultiviewManager:
                 command.append("-re")
 
             command.extend([
-                "-thread_queue_size", "512",
+                "-fflags", "+genpts+discardcorrupt",
+                "-use_wallclock_as_timestamps", "1",
+                "-thread_queue_size", "1024",
                 "-i", channel["input_url"]
             ])
 
-        for _ in range(slots - len(channels)):
+        for index in range(len(channels), len(positions)):
+            position = positions[index]
+
             command.extend([
                 "-f", "lavfi",
                 "-i",
                 (
-                    f"color=c=black:"
-                    f"s={tile_width}x{tile_height}:r=25"
+                    "color=c=black:"
+                    f"s={position['width']}x"
+                    f"{position['height']}:r=25"
                 )
             ])
 
         filters = []
         labels = []
 
-        for index in range(slots):
+        for index, position in enumerate(positions):
+            width = position["width"]
+            height = position["height"]
+
             filters.append(
                 f"[{index}:v]"
-                f"fps=25,"
-                f"scale={tile_width}:{tile_height}:"
+                f"settb=AVTB,setpts=N/(25*TB),fps=25,"
+                f"scale={width}:{height}:"
                 f"force_original_aspect_ratio=decrease,"
-                f"pad={tile_width}:{tile_height}:"
+                f"pad={width}:{height}:"
                 f"(ow-iw)/2:(oh-ih)/2:black,"
                 f"setsar=1,"
-                f"setpts=PTS-STARTPTS"
+                f"setpts=PTS"
                 f"[v{index}]"
             )
+
             labels.append(f"[v{index}]")
 
-        positions = []
-
-        for index in range(slots):
-            column = index % columns
-            row = index // columns
-            positions.append(
-                f"{column * tile_width}_{row * tile_height}"
-            )
+        layout_string = "|".join(
+            f"{position['x']}_{position['y']}"
+            for position in positions
+        )
 
         filters.append(
             "".join(labels) +
-            f"xstack=inputs={slots}:"
-            f"layout={'|'.join(positions)}:"
-            f"fill=black[outv]"
+            f"xstack=inputs={len(positions)}:"
+            f"layout={layout_string}:fill=black,"
+            f"pad=1280:720:0:0:black[outv]"
         )
 
         command.extend([
             "-filter_complex", ";".join(filters),
             "-map", "[outv]",
             "-an",
+            "-r", "25",
+            "-fps_mode", "cfr",
             "-c:v", "libx264",
             "-preset", "ultrafast",
             "-tune", "zerolatency",
@@ -175,22 +283,28 @@ class MultiviewManager:
 
         return command
 
-    def start(self, channels, columns):
-        if columns not in (2, 3, 4):
-            raise ValueError("Layout must be 2, 3 or 4")
+    def start(
+        self,
+        channels,
+        layout,
+        channel_ids,
+        custom_columns
+    ):
+        ordered = self._ordered_channels(
+            channels,
+            channel_ids
+        )
 
-        configured = [
-            channel for channel in channels
-            if channel.get("input_url", "").strip()
-        ]
+        if not ordered:
+            raise RuntimeError("No configured decoder inputs")
 
-        slots = columns * columns
-        configured = configured[:slots]
+        positions = self._layout_positions(
+            layout,
+            len(ordered),
+            custom_columns
+        )
 
-        if not configured:
-            raise RuntimeError(
-                "No configured decoder inputs"
-            )
+        ordered = ordered[:len(positions)]
 
         self._stop_mosaic()
         self.ensure_mediamtx()
@@ -200,7 +314,7 @@ class MultiviewManager:
         ).open("a", encoding="utf-8")
 
         self.process = subprocess.Popen(
-            self.build_command(configured, columns),
+            self.build_command(ordered, positions),
             stdout=self.process_log,
             stderr=subprocess.STDOUT,
             creationflags=getattr(
@@ -210,14 +324,22 @@ class MultiviewManager:
             )
         )
 
-        self.layout = columns
-        self.channels = [
-            {
-                "id": channel["id"],
-                "name": channel["name"]
-            }
-            for channel in configured
-        ]
+        self.layout = layout
+        self.custom_columns = custom_columns
+        self.tiles = []
+
+        for index, position in enumerate(positions):
+            channel = (
+                ordered[index]
+                if index < len(ordered)
+                else None
+            )
+
+            self.tiles.append({
+                **position,
+                "id": channel["id"] if channel else None,
+                "name": channel["name"] if channel else "NO SIGNAL"
+            })
 
         time.sleep(0.7)
 
@@ -232,7 +354,7 @@ class MultiviewManager:
 
     def stop(self):
         self._stop_mosaic()
-        self.channels = []
+        self.tiles = []
         return self.status()
 
     def status(self):
@@ -244,11 +366,14 @@ class MultiviewManager:
         return {
             "running": running,
             "layout": self.layout,
-            "channels": self.channels if running else [],
-            "webrtc_url":
+            "custom_columns": self.custom_columns,
+            "tiles": self.tiles if running else [],
+            "webrtc_url": (
                 "http://127.0.0.1:8889/multiview"
                 if running else None
+            )
         }
 
 
 multiview_manager = MultiviewManager()
+

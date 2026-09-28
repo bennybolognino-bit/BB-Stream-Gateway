@@ -1,4 +1,4 @@
-const grid = document.getElementById("channels");
+﻿const grid = document.getElementById("channels");
 const notification = document.getElementById("notification");
 
 function escapeHtml(value) {

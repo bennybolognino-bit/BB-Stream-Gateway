@@ -1,4 +1,4 @@
-const grid = document.getElementById("decoder-grid");
+﻿const grid = document.getElementById("decoder-grid");
 const notice = document.getElementById("notice");
 
 const esc = value => String(value ?? "")
@@ -34,7 +34,7 @@ function renderDecoder(channel) {
     <article class="card" id="decoder-card-${channel.id}">
         <div class="card-header">
             <div>
-                <span class="channel-label">DECODER ${channel.id} · NOME / ETICHETTA</span>
+                <span class="channel-label">DECODER ${channel.id}</span>
                 <input id="name-${channel.id}" class="channel-name"
                     value="${esc(channel.name)}" ${disabled}>
             </div>
@@ -335,3 +335,4 @@ function attachAudioControls(channels) {
         actions.before(panel);
     }
 }
+

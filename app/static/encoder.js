@@ -1,4 +1,4 @@
-const grid = document.getElementById("encoder-grid");
+﻿const grid = document.getElementById("encoder-grid");
 const notice = document.getElementById("notice");
 
 const esc = value => String(value ?? "")
@@ -34,7 +34,7 @@ function renderEncoder(channel) {
     <article class="card" id="encoder-card-${channel.id}">
         <div class="card-header">
             <div>
-                <span class="channel-label">ENCODER ${channel.id} · NOME / ETICHETTA</span>
+                <span class="channel-label">ENCODER ${channel.id}</span>
                 <input id="name-${channel.id}" class="channel-name"
                     value="${esc(channel.name)}" ${disabled}>
             </div>
@@ -234,5 +234,6 @@ async function refreshEncoderStates() {
 }
 
 setInterval(refreshEncoderStates, 2000);
+
 
 

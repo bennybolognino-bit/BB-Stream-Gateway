@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -39,11 +39,21 @@
                 <div class="multiview-controls">
                     <label for="layout-selector">LAYOUT</label>
 
-                    <select id="layout-selector">
-                        <option value="2">2 × 2</option>
-                        <option value="3">3 × 3</option>
-                        <option value="4">4 × 4</option>
-                    </select>
+                    <select id="layout-selector" onchange="layoutChanged()">
+    <option value="grid2">Griglia 2 x 2</option>
+    <option value="grid3">Griglia 3 x 3</option>
+    <option value="grid4">Griglia 4 x 4</option>
+    <option value="main3">1 grande + 3 piccoli</option>
+    <option value="main5">1 grande + 5 piccoli</option>
+    <option value="custom">Griglia personalizzata</option>
+</select>
+
+<select id="custom-columns" style="display:none">
+    <option value="1">1 colonna</option>
+    <option value="2" selected>2 colonne</option>
+    <option value="3">3 colonne</option>
+    <option value="4">4 colonne</option>
+</select>
 
                     <button class="start" onclick="startMultiview()">
                         START
@@ -75,11 +85,19 @@
                 </div>
             </div>
 
-            <div id="multiview-message"></div>
+            <div class="channel-order-panel">
+    <h3>ORDINE CANALI</h3>
+    <p>Trascina i canali per modificarne la posizione.</p>
+    <div id="channel-order" class="channel-order"></div>
+</div>
+
+<div id="multiview-message"></div>
         </main>
     </section>
 </div>
 
-<script src="/static/multiview.js?v=webrtc1"></script>
+<script src="/static/multiview.js?v=layouts2"></script>
 </body>
 </html>
+
+

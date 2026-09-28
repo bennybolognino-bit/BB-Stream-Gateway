@@ -1,12 +1,15 @@
-const viewer = document.getElementById("webrtc-viewer");
+﻿const viewer = document.getElementById("webrtc-viewer");
 const stage = document.getElementById("webrtc-stage");
 const labels = document.getElementById("channel-labels");
 const statusElement = document.getElementById("multiview-status");
 const waitingMessage = document.getElementById("waiting-message");
 const message = document.getElementById("multiview-message");
 const layoutSelector = document.getElementById("layout-selector");
+const customColumns = document.getElementById("custom-columns");
+const channelOrder = document.getElementById("channel-order");
 
 let viewerAttached = false;
+let draggedItem = null;
 
 async function api(path, options = {}) {
     const response = await fetch(path, options);
@@ -19,27 +22,156 @@ async function api(path, options = {}) {
     return data;
 }
 
-function renderLabels(state) {
-    const slots = state.layout * state.layout;
+function layoutChanged() {
+    customColumns.style.display =
+        layoutSelector.value === "custom"
+            ? "block"
+            : "none";
 
-    labels.className =
-        `channel-labels layout-${state.layout}`;
+    savePreset();
+}
 
-    const items = [];
+function savePreset() {
+    localStorage.setItem(
+        "bb-multiview-layout",
+        layoutSelector.value
+    );
 
-    for (let index = 0; index < slots; index++) {
-        const channel = state.channels[index];
+    localStorage.setItem(
+        "bb-multiview-columns",
+        customColumns.value
+    );
 
-        items.push(`
-            <div class="channel-overlay">
-                ${channel
-                    ? `CH ${channel.id} · ${channel.name}`
-                    : "NO SIGNAL"}
-            </div>
-        `);
+    localStorage.setItem(
+        "bb-multiview-order",
+        JSON.stringify(getChannelOrder())
+    );
+}
+
+function loadPreset() {
+    layoutSelector.value =
+        localStorage.getItem("bb-multiview-layout")
+        || "grid2";
+
+    customColumns.value =
+        localStorage.getItem("bb-multiview-columns")
+        || "2";
+
+    layoutChanged();
+}
+
+function getChannelOrder() {
+    return [...channelOrder.querySelectorAll(".order-item")]
+        .map(item => Number(item.dataset.channelId));
+}
+
+function renderChannelOrder(channels) {
+    const saved = JSON.parse(
+        localStorage.getItem("bb-multiview-order")
+        || "[]"
+    );
+
+    const lookup = new Map(
+        channels.map(channel => [channel.id, channel])
+    );
+
+    const ordered = [];
+
+    for (const id of saved) {
+        if (lookup.has(id)) {
+            ordered.push(lookup.get(id));
+            lookup.delete(id);
+        }
     }
 
-    labels.innerHTML = items.join("");
+    ordered.push(...lookup.values());
+
+    channelOrder.innerHTML = ordered.map(channel => `
+        <div
+            class="order-item"
+            draggable="true"
+            data-channel-id="${channel.id}">
+            <span class="drag-handle">â˜°</span>
+            <strong>${channel.name}</strong>
+            <span>Decoder ${channel.id}</span>
+        </div>
+    `).join("");
+
+    enableDragging();
+}
+
+function enableDragging() {
+    const items = channelOrder.querySelectorAll(".order-item");
+
+    items.forEach(item => {
+        item.addEventListener("dragstart", () => {
+            draggedItem = item;
+            item.classList.add("dragging");
+        });
+
+        item.addEventListener("dragend", () => {
+            item.classList.remove("dragging");
+            draggedItem = null;
+            savePreset();
+        });
+
+        item.addEventListener("dragover", event => {
+            event.preventDefault();
+
+            if (!draggedItem || draggedItem === item) return;
+
+            const rectangle = item.getBoundingClientRect();
+            const after =
+                event.clientY >
+                rectangle.top + rectangle.height / 2;
+
+            channelOrder.insertBefore(
+                draggedItem,
+                after ? item.nextSibling : item
+            );
+        });
+    });
+}
+
+async function loadChannels() {
+    try {
+        const channels = await api("/api/decoders");
+
+        renderChannelOrder(
+            channels.filter(channel =>
+                channel.input_url?.trim()
+            )
+        );
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+function renderLabels(state) {
+    labels.className = "channel-labels";
+    labels.innerHTML = "";
+
+    for (const tile of state.tiles) {
+        const overlay = document.createElement("div");
+        overlay.className = "channel-overlay";
+        overlay.textContent = tile.id
+            ? `CH ${tile.id} Â· ${tile.name}`
+            : "NO SIGNAL";
+
+        overlay.style.left =
+            `${tile.x / 12.8}%`;
+
+        overlay.style.top =
+            `${tile.y / 7.2}%`;
+
+        overlay.style.width =
+            `${tile.width / 12.8}%`;
+
+        overlay.style.height =
+            `${tile.height / 7.2}%`;
+
+        labels.appendChild(overlay);
+    }
 }
 
 function applyStatus(state) {
@@ -49,10 +181,11 @@ function applyStatus(state) {
     statusElement.className =
         state.running ? "status running" : "status stopped";
 
-    layoutSelector.value = String(state.layout);
-    renderLabels(state);
-
     if (state.running) {
+        layoutSelector.value = state.layout;
+        customColumns.value = state.custom_columns;
+        layoutChanged();
+        renderLabels(state);
         waitingMessage.style.display = "none";
 
         if (!viewerAttached) {
@@ -72,18 +205,22 @@ function applyStatus(state) {
         viewer.src = "about:blank";
         viewerAttached = false;
         waitingMessage.style.display = "grid";
+        labels.innerHTML = "";
     }
 }
 
 async function startMultiview() {
-    message.textContent = "Starting WebRTC multiview...";
+    message.textContent = "Starting multiview...";
+    savePreset();
 
     try {
         const state = await api("/api/multiview/start", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
-                layout: Number(layoutSelector.value)
+                layout: layoutSelector.value,
+                custom_columns: Number(customColumns.value),
+                channel_ids: getChannelOrder()
             })
         });
 
@@ -109,9 +246,7 @@ async function stopMultiview() {
 }
 
 function openFullscreen() {
-    if (stage.requestFullscreen) {
-        stage.requestFullscreen();
-    }
+    stage.requestFullscreen?.();
 }
 
 async function refreshStatus() {
@@ -123,5 +258,7 @@ async function refreshStatus() {
     }
 }
 
+loadPreset();
+loadChannels();
 refreshStatus();
 setInterval(refreshStatus, 3000);

@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -11,7 +13,16 @@ router = APIRouter(
 
 
 class MultiviewConfiguration(BaseModel):
-    layout: int = Field(default=2, ge=2, le=4)
+    layout: Literal[
+        "grid2",
+        "grid3",
+        "grid4",
+        "main3",
+        "main5",
+        "custom"
+    ] = "grid2"
+    custom_columns: int = Field(default=2, ge=1, le=4)
+    channel_ids: list[int] = []
 
 
 @router.get("/status")
@@ -24,7 +35,9 @@ def start(configuration: MultiviewConfiguration):
     try:
         return multiview_manager.start(
             decoder_manager.list_channels(),
-            configuration.layout
+            configuration.layout,
+            configuration.channel_ids,
+            configuration.custom_columns
         )
     except (RuntimeError, ValueError) as error:
         raise HTTPException(
